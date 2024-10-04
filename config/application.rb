@@ -21,7 +21,7 @@ module ExampleApp
     # config.i18n.default_locale = :de
 
     # Do not swallow errors in after_commit/after_rollback callbacks.
-    config.active_record.raise_in_transactional_callbacks = true
+    # config.active_record.raise_in_transactional_callbacks = true
 
     # Since we run in a Docker container, always log to stdout
     config.logger = Logger.new(STDOUT)

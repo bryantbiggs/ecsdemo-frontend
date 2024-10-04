@@ -1,26 +1,49 @@
-# FROM ruby:2.5-slim
-FROM public.ecr.aws/bitnami/ruby:2.5
+FROM public.ecr.aws/docker/library/ruby:3.3-bookworm AS base
 
-COPY Gemfile Gemfile.lock /usr/src/app/
-WORKDIR /usr/src/app
+WORKDIR /app
 
-RUN apt-get update && apt-get -y install iproute2 curl jq libgmp3-dev ruby-dev build-essential sqlite libsqlite3-dev python3 python3-pip && \
-    gem install bundler:1.17.3 && \
-    bundle install && \
-    pip3 install awscli netaddr && \
-    apt-get autoremove -y --purge && \
-    apt-get remove -y --auto-remove --purge ruby-dev libgmp3-dev build-essential libsqlite3-dev && \
-    apt-get clean && \
-    rm -rvf /root/* /root/.gem* /var/cache/*
+COPY Gemfile Gemfile.lock ./
+RUN bundle install --jobs=10
 
-COPY . /usr/src/app
-RUN chmod +x /usr/src/app/startup-cdk.sh
+COPY . .
 
-# helpful when trying to update gems -> bundle update, remove the Gemfile.lock, start ruby
-# RUN bundle update
-# RUN rm -vf /usr/src/app/Gemfile.lock
+##########################################################################
+
+FROM public.ecr.aws/docker/library/ruby:3.3-slim-bookworm
+
+COPY --from=base /usr/local/bundle /usr/local/bundle
+COPY --from=base /app /app
+
+RUN echo 'APT::Install-Suggests "0";' >> /etc/apt/apt.conf.d/00-docker \
+  && echo 'APT::Install-Recommends "0";' >> /etc/apt/apt.conf.d/00-docker \
+  && apt update \
+  && apt upgrade -y \
+  && apt install -y \
+    iproute2 \
+    curl \
+    jq \
+    unzip \
+  && curl https://bun.sh/install | bash \
+  && cd /tmp \
+    && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
+    && unzip awscliv2.zip \
+    && ./aws/install \
+    && rm -rf /tmp/* \
+  && apt purge --autoremove -y \
+    unzip \
+  && apt clean \
+  && rm -rf /var/lib/apt/lists/*
+
+ENV BUN_INSTALL="/root/.bun"
+ENV PATH="$BUN_INSTALL/bin:$PATH"
+
+WORKDIR /app
+
+ENV RAILS_ENV=production
+RUN rails credentials:edit \
+  && rake assets:precompile
 
 HEALTHCHECK --interval=10s --timeout=3s \
   CMD curl -f -s http://localhost:3000/health/ || exit 1
 EXPOSE 3000
-ENTRYPOINT ["bash","/usr/src/app/startup-cdk.sh"]
+ENTRYPOINT ["bash","/app/startup-cdk.sh"]

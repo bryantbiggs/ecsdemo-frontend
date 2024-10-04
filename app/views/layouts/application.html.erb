@@ -1,10 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>ExampleApp</title>
+  <meta name="turbolinks-cache-control" content="no-cache">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap" rel="stylesheet">
+  <%= favicon_link_tag asset_path('amazon-ecs-color-icon.png') %>
+  <title>ECS Demo</title>
   <script>
     function load() {
-      setTimeout(function() {location=''}, 50)
+      setTimeout(function() {location=''}, 5000)
     }
     window.onload = load;
   </script>

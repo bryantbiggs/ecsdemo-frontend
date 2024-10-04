@@ -1,1 +1,13 @@
 .git
+
+cdk/
+copilot/
+kubernetes/
+buildspec*
+
+docker-compose*
+Dockerfile*
+
+ecs-params*
+
+README.md
